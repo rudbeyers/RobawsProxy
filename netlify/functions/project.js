@@ -1,59 +1,67 @@
-export default async (req) => {
-  const ALLOWED_ORIGIN = "https://rudbeyers.github.io";
-  const origin = req.headers.get("origin"); // kan null of "null" zijn (in-app browsers)
+// netlify/functions/project.js
 
-  // Sta toe: jouw GitHub Pages origin, én webviews die origin "null" sturen
-  const allowOrigin =
-    origin === ALLOWED_ORIGIN ? origin :
-    origin === "null" ? "null" :
-    ALLOWED_ORIGIN;
-
+exports.handler = async (event) => {
   const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Allow-Methods": "GET,OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
-    "Vary": "Origin",
   };
 
-  if (req.method === "OPTIONS") {
-    return new Response("", { status: 204, headers: corsHeaders });
+  // Preflight
+  if (event.httpMethod === "OPTIONS") {
+    return { statusCode: 204, headers: corsHeaders, body: "" };
   }
 
-
-
-  const url = new URL(req.url);
-  const projectnummer = url.searchParams.get("projectnummer");
-
-  if (!projectnummer) {
-    return new Response(JSON.stringify({ error: "Missing projectnummer" }), {
-      status: 400,
+  if (event.httpMethod !== "GET") {
+    return {
+      statusCode: 405,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+      body: JSON.stringify({ error: "Method not allowed" }),
+    };
+  }
+
+  const projectnummer = event.queryStringParameters?.projectnummer;
+  if (!projectnummer) {
+    return {
+      statusCode: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      body: JSON.stringify({ error: "Missing projectnummer" }),
+    };
   }
 
   const apiKey = process.env.ROBAWS_API_KEY;
   const apiSecret = process.env.ROBAWS_API_SECRET;
 
   if (!apiKey || !apiSecret) {
-    return new Response(JSON.stringify({ error: "Missing API credentials on server" }), {
-      status: 500,
+    return {
+      statusCode: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+      body: JSON.stringify({ error: "Missing API credentials on server" }),
+    };
   }
 
   const auth = Buffer.from(`${apiKey}:${apiSecret}`).toString("base64");
 
-  const upstream = await fetch(`https://app.robaws.com/api/v2/projects/${encodeURIComponent(projectnummer)}`, {
-    headers: {
-      "Authorization": `Basic ${auth}`,
-      "Accept": "application/json",
-    },
-  });
+  try {
+    const upstream = await fetch(`https://app.robaws.com/api/v2/projects/${encodeURIComponent(projectnummer)}`, {
+      headers: {
+        "Authorization": `Basic ${auth}`,
+        "Accept": "application/json",
+      },
+    });
 
-  const text = await upstream.text();
+    const text = await upstream.text();
 
-  return new Response(text, {
-    status: upstream.status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
+    return {
+      statusCode: upstream.status,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      body: text,
+    };
+  } catch (err) {
+    return {
+      statusCode: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      body: JSON.stringify({ error: "Fetch failed", details: String(err) }),
+    };
+  }
 };
