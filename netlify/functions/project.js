@@ -1,10 +1,15 @@
 export default async (req) => {
-  // CORS: alleen jouw GitHub Pages site toelaten
   const ALLOWED_ORIGIN = "https://rudbeyers.github.io";
-  const origin = req.headers.get("origin") || "";
+  const origin = req.headers.get("origin"); // kan null zijn
+
+  // Laat ook "null" origin toe (typisch webviews / in-app browsers)
+  const allowOrigin =
+    origin === ALLOWED_ORIGIN ? origin :
+    origin === "null" ? "null" :
+    ALLOWED_ORIGIN;
 
   const corsHeaders = {
-    "Access-Control-Allow-Origin": origin === ALLOWED_ORIGIN ? origin : ALLOWED_ORIGIN,
+    "Access-Control-Allow-Origin": allowOrigin,
     "Access-Control-Allow-Methods": "GET, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
     "Vary": "Origin",
