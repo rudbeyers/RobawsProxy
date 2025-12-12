@@ -1,8 +1,8 @@
 export default async (req) => {
   const ALLOWED_ORIGIN = "https://rudbeyers.github.io";
-  const origin = req.headers.get("origin"); // kan null zijn
+  const origin = req.headers.get("origin"); // kan null of "null" zijn (in-app browsers)
 
-  // Laat ook "null" origin toe (typisch webviews / in-app browsers)
+  // Sta toe: jouw GitHub Pages origin, én webviews die origin "null" sturen
   const allowOrigin =
     origin === ALLOWED_ORIGIN ? origin :
     origin === "null" ? "null" :
@@ -18,6 +18,8 @@ export default async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("", { status: 204, headers: corsHeaders });
   }
+
+
 
   const url = new URL(req.url);
   const projectnummer = url.searchParams.get("projectnummer");
