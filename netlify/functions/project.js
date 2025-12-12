@@ -1,8 +1,10 @@
 export default async (req) => {
-  // CORS (laat je GitHub Pages site toe)
+  // CORS: alleen jouw GitHub Pages site toelaten
+  const ALLOWED_ORIGIN = "https://rudbeyers.github.io";
   const origin = req.headers.get("origin") || "";
+
   const corsHeaders = {
-    "Access-Control-Allow-Origin": origin.endsWith(".github.io") ? origin : "https://github.com",
+    "Access-Control-Allow-Origin": origin === ALLOWED_ORIGIN ? origin : ALLOWED_ORIGIN,
     "Access-Control-Allow-Methods": "GET, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
     "Vary": "Origin",
