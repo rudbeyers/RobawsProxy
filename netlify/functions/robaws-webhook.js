@@ -5,7 +5,7 @@ const ROBAWS_BASE = "https://app.robaws.com/api/v2";
 
 function buildDescriptionHtml(projectId) {
   const url = `https://rudbeyers.github.io/backxWerfapp/?projectnummer=${encodeURIComponent(projectId)}`;
-  return `<p>Vul het formulier in</p>\n<p><a href="${url}">Klik</a></p>`;
+  return `<a href="${url}">Vul hier het formulier in</a>`;
 }
 
 function timingSafeEqualHex(a, b) {
