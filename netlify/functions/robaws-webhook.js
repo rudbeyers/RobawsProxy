@@ -3,6 +3,11 @@ import crypto from "crypto";
 const APP_URL_BASE = "https://rudbeyers.github.io/backxWerfapp/"; // jouw werfapp
 const ROBAWS_BASE = "https://app.robaws.com/api/v2";
 
+function buildDescriptionHtml(projectId) {
+  const url = `https://rudbeyers.github.io/backxWerfapp/?projectnummer=${encodeURIComponent(projectId)}`;
+  return `<p>Vul het formulier in</p>\n<p><a href="${url}">Klik</a></p>`;
+}
+
 function timingSafeEqualHex(a, b) {
   // voorkom timing attacks
   const aa = Buffer.from(a || "", "hex");
@@ -83,14 +88,15 @@ export async function handler(event) {
     return { statusCode: 200, body: "Missing ids" };
   }
 
-  const werfUrl = buildWerfUrl(projectId);
+  const descriptionHtml = buildDescriptionHtml(projectId);
 
   // 4) Loop-preventie: als description al exact die URL is → niets doen
   const currentDescription = (item?.description || "").trim();
-  if (currentDescription === werfUrl) {
-    console.log("Already up to date, skip.");
-    return { statusCode: 200, body: "Already up to date" };
-  }
+if (currentDescription === descriptionHtml) {
+  console.log("Description staat al correct, skip.");
+  return { statusCode: 200, body: "Already up to date" };
+}
+
 
   // 5) PATCH terugschrijven naar Robaws
   const apiKey = process.env.ROBAWS_API_KEY;
@@ -103,7 +109,8 @@ export async function handler(event) {
 
   const auth = Buffer.from(`${apiKey}:${apiSecret}`).toString("base64");
 
-  const patchBody = { description: werfUrl };
+  const patchBody = { description: descriptionHtml };
+
 
   try {
     const res = await fetch(`${ROBAWS_BASE}/planning-items/${encodeURIComponent(planningItemId)}`, {
